@@ -47,6 +47,18 @@ def sparse_grid(n_agents, iDepth):
     file.close()
     grid.loadNeededPoints(aVals)
     
+    # make gridd adaptive
+    ############################################################################
+    for iK in range(refinement_level):
+        grid.setSurplusRefinement(fTol, 1, "fds")   #also use fds, or other rules
+        aPoints = grid.getNeededPoints()
+        aVals = np.empty([aPoints.shape[0], 1])
+        for iI in range(aPoints.shape[0]):
+            aVals[iI] = solver.initial(aPoints[iI], n_agents)[0] 
+      
+        grid.loadNeededPoints(aVals)
+    ############################################################################
+    
     f=open("grid.txt", 'w')
     np.savetxt(f, aPoints, fmt='% 2.16f')
     f.close()

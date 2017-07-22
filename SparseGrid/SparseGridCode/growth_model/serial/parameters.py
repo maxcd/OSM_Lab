@@ -18,6 +18,10 @@ iDepth=1
 iOut=1         # how many outputs
 which_basis = 1 #linear basis function (2: quadratic local basis)
 
+# additional parameters for adaptive sparse grid
+refinement_level = 2
+fTol = 1e-6
+
 # control of iterations
 numstart = 0   # which is iteration to start (numstart = 0: start from scratch, number=/0: restart)
 numits = 10    # which is the iteration to end

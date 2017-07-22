@@ -128,12 +128,12 @@ for iI in range(aPoints.shape[0]):
 grid1.loadNeededPoints(aVals)
 
 print("\n-------------------------------------------------------------------------------------------------")
-print("Example 2: interpolate f(x,y) = cos(0.5 * pi * x) * cos(0.5 * pi * y)")
+print("Example 2: interpolate f(x,y) = (1+ 0.5 x, + 0.5*y )** -3")
 print("   the error is estimated as the maximum from 1000 random points")
 print("   tolerance is set at 1.E-5 and piecewise linear basis functions are used\n")
-
+print("initial Grid1 has", aPoints.shape[0] , "points with level", iDepth)
 print("               Classic refinement ")
-print(" refinement level         points     error   ")
+print(" refinement level   points  error   ")
 
 #refinement level
 for iK in range(refinement_level):
@@ -147,7 +147,7 @@ for iK in range(refinement_level):
     aRes = grid1.evaluateBatch(aPnts)
     fError1 = max(np.fabs(aRes[:,0] - aTres))
 
-    print(" {0:9d} {1:9d}  {2:1.2e}".format(iK+1, grid1.getNumPoints(), fError1))
+    print(" {0:9d} \t {1:9d}  {2:1.2e}".format(iK+1, grid1.getNumPoints(), fError1))
 
 # write coordinates of grid to a text file
 f2=open("Adaptive_sparse_grid.txt", 'a')
@@ -162,5 +162,3 @@ print("\n-----------------------------------------------------------------------
 print "   a fix sparse grid of level ", refinement_level+iDepth, " would consist of " ,a, " points"
 print("\n-------------------------------------------------------------------------------------------------\n")    
 
-
-    
