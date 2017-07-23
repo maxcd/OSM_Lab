@@ -62,7 +62,7 @@ def ls_error(n_agents, t1, t2, num_points):
         
     file.close()
     
-    return 
+    return average, max_abs_diff 
         
 #======================================================================
         

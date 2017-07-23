@@ -29,40 +29,42 @@ import numpy as np
 # Start with Value Function Iteration
 
 # terminal value function
-valnew=TasmanianSG.TasmanianSparseGrid()
-if (numstart==0):
-    valnew=interpol.sparse_grid(n_agents, iDepth)
-    valnew.write("valnew_1." + str(numstart) + ".txt") #write file to disk for restart
-
-# value function during iteration
-else:
-    valnew.read("valnew_1." + str(numstart) + ".txt")  #write file to disk for restart
-    
-valold=TasmanianSG.TasmanianSparseGrid()
-valold=valnew
-
-for i in range(numstart, numits):
+def run_all(n_agents):
     valnew=TasmanianSG.TasmanianSparseGrid()
-    valnew=interpol_iter.sparse_grid_iter(n_agents, iDepth, valold)
+    if (numstart==0):
+        valnew=interpol.sparse_grid(n_agents, iDepth)
+        valnew.write("valnew_1." + str(numstart) + ".txt") #write file to disk for restart
+    
+    # value function during iteration
+    else:
+        valnew.read("valnew_1." + str(numstart) + ".txt")  #write file to disk for restart
+        
     valold=TasmanianSG.TasmanianSparseGrid()
     valold=valnew
-    valnew.write("valnew_1." + str(i+1) + ".txt")
     
-#======================================================================
-print "==============================================================="
-print " "
-print " Computation of a growth model of dimension ", n_agents ," finished after ", numits, " steps"
-print " "
-print "==============================================================="
-#======================================================================
-
-# compute errors   
-avg_err=post.ls_error(n_agents, numstart, numits, No_samples)
-
-#======================================================================
-print "==============================================================="
-print " "
-print " Errors are computed -- see errors.txt"
-print " "
-print "==============================================================="
-#======================================================================
+    for i in range(numstart, numits):
+        valnew=TasmanianSG.TasmanianSparseGrid()
+        valnew=interpol_iter.sparse_grid_iter(n_agents, iDepth, valold)
+        valold=TasmanianSG.TasmanianSparseGrid()
+        valold=valnew
+        valnew.write("valnew_1." + str(i+1) + ".txt")
+        
+    #======================================================================
+    print "==============================================================="
+    print " "
+    print " Computation of a growth model of dimension ", n_agents ," finished after ", numits, " steps"
+    print " "
+    print "==============================================================="
+    #======================================================================
+    
+    # compute errors   
+    avg_err, max_err =post.ls_error(n_agents, numstart, numits, No_samples)
+    
+    #======================================================================
+    print "==============================================================="
+    print " "
+    print " Errors are computed -- see errors.txt"
+    print " "
+    print "==============================================================="
+    #======================================================================
+    return avg_err, max_err
