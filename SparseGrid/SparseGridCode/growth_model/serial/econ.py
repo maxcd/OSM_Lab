@@ -34,8 +34,8 @@ def utility(cons=[], lab=[]):
 #====================================================================== 
 # output_f 
 
-def output_f(kap=[], lab=[]):
-    fun_val = big_A*(kap**psi)*(lab**(1.0 - psi))
+def output_f(thet, kap=[], lab=[]):
+    fun_val = thet * big_A*(kap**psi)*(lab**(1.0 - psi))
     return fun_val
 
 #======================================================================

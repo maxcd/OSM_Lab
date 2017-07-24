@@ -13,7 +13,7 @@ from ipopt_wrapper import EV_F_ITER, EV_GRAD_F_ITER, EV_G_ITER, EV_JAC_G_ITER
 import numpy as np
 import pyipopt
 
-def iterate(k_init, n_agents, grid):
+def iterate(k_init, n_agents, grid, thet):
     
     # IPOPT PARAMETERS below "
     N=3*n_agents    # number of vars
@@ -79,10 +79,10 @@ def iterate(k_init, n_agents, grid):
         return EV_GRAD_F_ITER(X, k_init, n_agents, grid)
         
     def eval_g(x):
-        return EV_G_ITER(X, k_init, n_agents)
+        return EV_G_ITER(X, k_init, n_agents, thet)
         
     def eval_jac_g(x, flag):
-        return EV_JAC_G_ITER(X, flag, k_init, n_agents)
+        return EV_JAC_G_ITER(X, flag, k_init, n_agents, thet)
         
     # First create a handle for the Ipopt problem 
     nlp=pyipopt.create(N, X_L, X_U, M, G_L, G_U, NELE_JAC, NELE_HESS, eval_f, eval_grad_f, eval_g, eval_jac_g)
