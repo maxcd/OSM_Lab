@@ -1,9 +1,9 @@
 #======================================================================
 #
 #     This routine interfaces with the TASMANIAN Sparse grid
-#     The crucial part is 
+#     The crucial part is
 #
-#     aVals[iI]=solveriter.iterate(aPoints[iI], n_agents)[0]  
+#     aVals[iI]=solveriter.iterate(aPoints[iI], n_agents)[0]
 #     => at every gridpoint, we solve an optimization problem
 #
 #     Simon Scheidegger, 11/16 ; 07/17
@@ -17,7 +17,7 @@ import nonlinear_solver_iterate as solveriter
 #======================================================================
 
 def sparse_grid_iter(n_agents, iDepth, valold, thet):
-    
+
     grid  = TasmanianSG.TasmanianSparseGrid()
 
     k_range=np.array([k_bar, k_up])
@@ -37,17 +37,17 @@ def sparse_grid_iter(n_agents, iDepth, valold, thet):
     aPoints=grid.getPoints()
     iNumP1=aPoints.shape[0]
     aVals=np.empty([iNumP1, 1])
-    
+
     file=open("comparison1.txt", 'w')
     for iI in range(iNumP1):
-        aVals[iI]=solveriter.iterate(aPoints[iI], n_agents, valold, thet)[0]
+        aVals[iI]=solveriter.iterate(aPoints[iI], n_agents, gridlist, thet)[0]
         v=aVals[iI]*np.ones((1,1))
         to_print=np.hstack((aPoints[iI].reshape(1,n_agents), v))
         np.savetxt(file, to_print, fmt='%2.16f')
-        
+
     file.close()
     grid.loadNeededPoints(aVals)
-    
+
     # make the grid adaptive
     ################################################################################
     for iK in range(refinement_level):
@@ -55,15 +55,15 @@ def sparse_grid_iter(n_agents, iDepth, valold, thet):
         aPoints = grid.getNeededPoints()
         aVals = np.empty([aPoints.shape[0], 1])
         for iI in range(aPoints.shape[0]):
-            aVals[iI] = solveriter.iterate(aPoints[iI], n_agents, valold, thet)[0]
-        
+            aVals[iI] = solveriter.iterate(aPoints[iI], n_agents, gridlist, thet)[0]
+
         grid.loadNeededPoints(aVals)
     #################################################################################
-     
+
     f=open("grid_iter.txt", 'w')  # changed this to 'a' instead of 'w'
     np.savetxt(f, aPoints, fmt='% 2.16f')
     f.close()
-    
+
     return grid
 
 #======================================================================
