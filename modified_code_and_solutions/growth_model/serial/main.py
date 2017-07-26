@@ -32,10 +32,11 @@ def run_all(n_agents):
     valnew=TasmanianSG.TasmanianSparseGrid()
 
     if (numstart==0):
-        gridlist = [valnew] * ntheta
+        gridlist = []
         for tT in range(ntheta):
-            valnew = gridlist[tT]
+            valnew=TasmanianSG.TasmanianSparseGrid()
             valnew=interpol.sparse_grid(n_agents, iDepth, theta[tT])
+            gridlist.append(valnew)
             valnew.write("valnew_1." + str(numstart) + "theta_" + str(tT) +  ".txt") #write file to disk for restart
 
     # value function during iteration
@@ -51,12 +52,17 @@ def run_all(n_agents):
     # avals_list = []
 
     for i in range(numstart, numits):
+        print " ================================================= "
+        print "             Iteration", i
+        print " ================================================= " 
         for tT in range(ntheta):
             thet = theta[tT]
             valnew = TasmanianSG.TasmanianSparseGrid()
             valnew = interpol_iter.sparse_grid_iter(n_agents, iDepth, gridlist, thet)
 
             valnew.write("valnew_1." + str(i+1) + "theta_" + str(tT) + ".txt")
+            gridlist[tT].copyGrid(valnew)
+        
         # valnew0=TasmanianSG.TasmanianSparseGrid()
         # valnew1=TasmanianSG.TasmanianSparseGrid()
         # valnew2=TasmanianSG.TasmanianSparseGrid()
@@ -97,7 +103,7 @@ def run_all(n_agents):
         # valold.loadNeededPoints(aVals_new)
         #valold=valnew
 
-        valold.write("valnew_1." + str(i+1) + "theta_" + str(tT) + ".txt")
+        # valold.write("valnew_1." + str(i+1) + "theta_" + str(tT) + ".txt")
 
     #======================================================================
     print "==============================================================="
@@ -108,13 +114,15 @@ def run_all(n_agents):
     #======================================================================
 
     # compute errors
-    avg_err, max_err =post.ls_error(n_agents, numstart, numits, No_samples)
+    post.ls_error(n_agents, numstart, numits, No_samples)
 
     #======================================================================
     print "==============================================================="
     print " "
-    print " Errors are computed -- see errors.txt"
+    print " Errors are computed -- see errors_theta_NUM.txt"
     print " "
+    print " Groupwork of Max, Clint and Ben at OSM Lab 2017"
     print "==============================================================="
     #======================================================================
-    return avg_err, max_err
+
+run_all(n_agents)

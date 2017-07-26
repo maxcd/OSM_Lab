@@ -16,7 +16,7 @@ import nonlinear_solver_iterate as solveriter
 
 #======================================================================
 
-def sparse_grid_iter(n_agents, iDepth, valold, thet):
+def sparse_grid_iter(n_agents, iDepth, gridlist, thet):
 
     grid  = TasmanianSG.TasmanianSparseGrid()
 
