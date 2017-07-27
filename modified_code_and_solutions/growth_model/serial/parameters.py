@@ -45,6 +45,7 @@ eta=1
 big_A=(1.0-beta)/(psi*beta)
 
 # add thee stochasti productivity shock
+ntheta = 5
 theta = np.array([0.9, 0.95, 1.0, 1.05, 1.1])
 pi = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
 

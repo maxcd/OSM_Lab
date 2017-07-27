@@ -52,11 +52,12 @@ def EV_F_ITER(X, k_init, n_agents, gridlist):
     inv=X[2*n_agents:3*n_agents]
 
     knext= (1-delta)*k_init + inv
-
+    
     # Compute Value Function
-    EV_prime = np.array([beta * pi[i] *grid.evaluate(knext) for i, grid in enumerate(gridlist)])
-    VT_sum=utility(cons, lab) + EV_prime.sum(axis=1)
-
+    
+    EV_prime = np.array([pi[i] * gridlist[i].evaluate(knext) for i in range(len(gridlist))])
+    VT_sum=utility(cons, lab) + beta * EV_prime.sum()
+    
     return VT_sum
 
 #=======================================================================
