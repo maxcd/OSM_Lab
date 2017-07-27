@@ -36,25 +36,64 @@ double gaussian_box_muller() {
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Pricing a Asian vanilla call option with a Monte Carlo method
 
-double monte_carlo_call_price(const int& num_sims, const double& S, const double& K, const double& r, const double& v, const double& T, const int& num_m) {
+double monte_carlo_call_asia_price(const int& num_sims, const double& S, const double& K, const double& r, const double& v, const double& T, const int& num_m) {
   
-  double S_cur = 0.0;
-  double S_path = 0.0;
   double payoff_sum = 0.0;
   double t = T / (num_m*1.0);
   double S_adjust = S * exp(t*(r-0.5*v*v)); 
  
+  // loop over the number of  iterations
   for (int i=0; i<num_sims; i++) {
-    for (int m=0; m<num_m; ++m){
+   
+    double S_cur = 0.0;
+    double S_prev = S;
+    double S_path = 0.0;
+   
+    // loop over the number of evaluations/periods  per options
+    for (int m=0; m<num_m; ++m) {
         double gauss_bm = gaussian_box_muller();
-        S_cur = S_adjust * exp(v*sqrt(t)*gauss_bm);
-        S_path += S_cur / (num_m * 1.0);   
+        S_cur = S_prev * exp(t*(r-0.5*v*v) + v*sqrt(t)*gauss_bm);
+        S_path += S_cur;  // add current value S_cur to the path 
+	
+	S_prev = S_cur; // update S_prev   
         }
-    payoff_sum += std::max(S_path - K, 0.0);
+    payoff_sum += std::max((S_path / num_m) - K, 0.0); // calculate payoff for one call
   }
 
   return (payoff_sum / static_cast<double>(num_sims)) * exp(-r*T);
 }
+
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Pricing a Asian vanilla put option with a Monte Carlo method
+
+double monte_carlo_put_asia_price(const int& num_sims, const double& S, const double& K, const double& r, const double& v, const double& T, const int& num_m) {
+  
+  double payoff_sum = 0.0;
+  double t = T / (num_m*1.0);
+  double S_adjust = S * exp(t*(r-0.5*v*v)); 
+ 
+  // loop over the number of  iterations
+  for (int i=0; i<num_sims; i++) {
+   
+    double S_cur = 0.0;
+    double S_prev = S;
+    double S_path = 0.0;
+   
+    // loop over the number of evaluations/periods  per options
+    for (int m=0; m<num_m; ++m) {
+        double gauss_bm = gaussian_box_muller();
+        S_cur = S_prev * exp(t*(r-0.5*v*v) + v*sqrt(t)*gauss_bm);
+        S_path += S_cur;  // add current value S_cur to the path 
+	
+	S_prev = S_cur; // update S_prev   
+        }
+    payoff_sum += std::max(K -  (S_path / num_m), 0.0); // calculate payoff for one call
+  }
+
+  return (payoff_sum / static_cast<double>(num_sims)) * exp(-r*T);
+}
+
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Pricing a European vanilla put option with a Monte Carlo method
@@ -88,19 +127,22 @@ int main(int argc, char **argv) {
   double T = 1.0;    // One year until expiry                                                                         
 
   // Then we calculate the call/put values via Monte Carlo                                                                          
-  double call = monte_carlo_call_price(num_sims, S, K, r, v, T, num_m);
-  double put = monte_carlo_put_price(num_sims, S, K, r, v, T);
+  double call_asia = monte_carlo_call_asia_price(num_sims, S, K, r, v, T, num_m);
+  double put_asia = monte_carlo_put_asia_price(num_sims, S, K, r, v, T, num_m);
+  //double put = monte_carlo_put_price(num_sims, S, K, r, v, T);
 
-  // Finally we output the parameters and prices                                                                      
-  std::cout << "Number of Paths: " << num_sims << std::endl;
-  std::cout << "Underlying:      " << S << std::endl;
-  std::cout << "Strike:          " << K << std::endl;
-  std::cout << "Risk-Free Rate:  " << r << std::endl;
-  std::cout << "Volatility:      " << v << std::endl;
-  std::cout << "Maturity:        " << T << std::endl;
+  // Finally we output the parameters and prices                                                                  
+  std::cout << "\nPricing an Asian Put and Call option" << std::endl; 
+  std::cout << "Number of Paths:   " << num_sims << std::endl;
+  std::cout << "# of evals p Path: " << num_m << std::endl;
+  std::cout << "Underlying:        " << S << std::endl;
+  std::cout << "Strike:            " << K << std::endl;
+  std::cout << "Risk-Free Rate:    " << r << std::endl;
+  std::cout << "Volatility:        " << v << std::endl;
+  std::cout << "Maturity:          " << T << std::endl;
 
-  std::cout << "Call Price:      " << call << std::endl;
-  std::cout << "Put Price:       " << put << std::endl;
+  std::cout << "Call Price:        " << call_asia << std::endl;
+  std::cout << "Put Price:         " << put_asia << std::endl;
 
   return 0;
 }
