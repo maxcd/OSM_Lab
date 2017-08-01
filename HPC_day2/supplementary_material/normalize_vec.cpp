@@ -39,13 +39,19 @@ void normalize_vector_omp(double *v, int n)
     double norm = 0.;
 
     // compute the norm of v
+    int i;
+    #pragma omp parallel
+    {
+    
+    #pragma omp for 
     for(int i=0; i<n; i++)
         norm += v[i]*v[i];
     norm = sqrt(norm);
-
+   
     // normalize v
     for(int i=0; i<n; i++)
         v[i] /= norm;
+    }
 }
 
 int main( void ){

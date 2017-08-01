@@ -14,7 +14,7 @@ int nthreads, tid;
   tid = omp_get_thread_num();
   printf("Hello World from thread = %d\n", tid);
 
-  /* Only master thread does this */
+  /* Only master thread does this as the master has always thread_num = 0*/
   if (tid == 0) 
     {
     nthreads = omp_get_num_threads();
