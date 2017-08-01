@@ -10,8 +10,13 @@ int main(void){
 
     int num_threads = omp_get_max_threads();
     std::cout << "dot of vectors with length " << N  << " with " << num_threads << " threads" << std::endl;
-
+    
+//    double time = -omp_get_wtime();
+//    double dot=0.;
+//    #pragma omp parallel
+//    { 
     // initialize the vectors
+//    #pragma omp for
     for(int i=0; i<N; i++) {
         a[i] = 1./2.;
         b[i] = double(i+1);
@@ -20,9 +25,13 @@ int main(void){
     double time = -omp_get_wtime();
     double dot=0.;
 
+//    #pragma omp parallel for reduction(+:dot)
     for(int i=0; i<N; i++) {
+        a[i] = 1./2.;
+        b[i] = double(i+1);
         dot += a[i] * b[i];
-    }
+    } 
+//   }
     time += omp_get_wtime();
 
     // use formula for sum of arithmetic sequence: sum(1:n) = (n+1)*n/2

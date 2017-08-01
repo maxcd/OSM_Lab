@@ -39,26 +39,30 @@ double gaussian_box_muller() {
 double monte_carlo_call_asia_price(const int& num_sims, const double& S, const double& K, const double& r, const double& v, const double& T, const int& num_m) {
   
   double payoff_sum = 0.0;
-  double t = T / (num_m*1.0);
-  double S_adjust = S * exp(t*(r-0.5*v*v)); 
+  double t = T / (num_m*1.0); 
   
   double S_cur = 0.0;
   double S_prev = S;
   double S_path = 0.0;
   double out = 0.0;
 
-  #pragma omp parallel shared(num_sims, num_m)\
+//  #pragma omp parallel shared(num_sims, num_m)\
 	firstprivate(S_cur, S_prev, S_path)  
-  { 
+//  { 
 
   // loop over the number of  iterations
-  #pragma omp for\
+//  #pragma omp for\
 	reduction(+:payoff_sum)  
    for (int i=0; i<num_sims; i++) {
-   
+  	
+	double S_cur = 0.0;
+  	double S_prev = S;
+  	double S_path = 0.0;
+
    // loop over the number of evaluations/periods  per options
-//   #pragma omp for firstprivate(S_cur, S_prev)\
-	reduction(+:S_path)
+   #pragma omp parallel firstprivate(S_cur, S_prev)
+
+   #pragma omp for reduction(+:S_path)
     for (int m=0; m<num_m; ++m) {
         double gauss_bm = gaussian_box_muller();
         S_cur = S_prev * exp(t*(r-0.5*v*v) + v*sqrt(t)*gauss_bm);
@@ -67,12 +71,12 @@ double monte_carlo_call_asia_price(const int& num_sims, const double& S, const d
         
   
    payoff_sum += std::max((S_path / num_m) - K, 0.0); // calculate payoff for one call
-  #pragma omp single
+//  #pragma omp single
   out = (payoff_sum / static_cast<double>(num_sims)) * exp(-r*T); 
 
   } // close inner loop
  } // close outer loop
-} // close parallel
+//} // close parallel
  return out;
 }
 
