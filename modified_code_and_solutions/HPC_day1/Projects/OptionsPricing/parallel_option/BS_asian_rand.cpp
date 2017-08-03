@@ -17,10 +17,11 @@
 generate gaussian random numbers; necessary for the Monte Carlo 
 method below. */
 
-double gaussian_box_muller() {
+double gaussian_box_muller(unsigned int s1, unsigned int s2) {
   double x = 0.0;
   double y = 0.0;
   double euclid_sq = 0.0;
+//  int tnum = omp_get_thread_num();
 
   // Continue generating two uniform random variables
   // until the square of their "euclidean distance" 
@@ -28,8 +29,8 @@ double gaussian_box_muller() {
   do {
     //unsigned int s1 = tnum*m*omp_get_wtime()*1000;
     //unsigned int s2 = tnum*tnum*m*omp_get_wtime()*1000 + 123954 ;
-    x = 2.0 * rand() / static_cast<double>(RAND_MAX)-1;
-    y = 2.0 * rand() / static_cast<double>(RAND_MAX)-1;
+    x = 2.0 * rand_r(&s1) / static_cast<double>(RAND_MAX)-1;
+    y = 2.0 * rand_r(&s2) / static_cast<double>(RAND_MAX)-1;
     euclid_sq = x*x + y*y;
   } while (euclid_sq >= 1.0);
 
@@ -47,22 +48,34 @@ double monte_carlo_call_asia_price(const int& num_sims, const double& S, const d
   double S_cur;
   double S_prev;
   double S_path;
+  double gauss_bm;
+  unsigned int s1;
+  unsigned int s2;
+  int tnum;
+
+  S_cur = 0.0;
+  S_prev = S;
+  S_path = 0.0;
  
   // loop over the number of  iterations
   #pragma omp parallel
 	{ 
-  #pragma omp for private(S_cur, S_path, S_prev)\
+  #pragma omp for private(gauss_bm, tnum, s1, s2)\
+	firstprivate(S_cur, S_path, S_prev)\
 	reduction(+:payoff_sum) 
   for (int i=0; i<num_sims; i++) {
    
    S_cur = 0.0;
    S_prev = S;
    S_path = 0.0;
+   tnum = omp_get_thread_num();
    
     // loop over the number of evaluations/periods  per options
    
     for (int m=0; m<num_m; ++m) {
-        double gauss_bm = gaussian_box_muller();
+	s1 = tnum*m*omp_get_wtime()*1000;
+	s2 = (tnum*tnum-tnum)* m * 1000 * omp_get_wtime(); 
+        gauss_bm = gaussian_box_muller(s1, s2);
         S_cur = S_prev * exp(t*(r-0.5*v*v) + v*sqrt(t)*gauss_bm);
         S_path += S_cur;  // add current value S_cur to the path 
 	
@@ -97,10 +110,12 @@ double monte_carlo_put_asia_price(const int& num_sims, const double& S, const do
     
     // loop over the number of evaluations/periods  per options
     for (int m=0; m<num_m; ++m) {
-        double gauss_bm = gaussian_box_muller();
-	//double gauss_bm = gaussian_box_muller(m);
+ 	unsigned int s1 = 1235*m*omp_get_wtime()*1000;
+	unsigned int s2 = (m*m -m) * 1000 * omp_get_wtime(); 
+        double gauss_bm = gaussian_box_muller(s1, s2);
         S_cur = S_prev * exp(t*(r-0.5*v*v) + v*sqrt(t)*gauss_bm);
         S_path += S_cur;  // add current value S_cur to the path 
+	
 	S_prev = S_cur; // update S_prev   
         }
     payoff_sum += std::max(K -  (S_path / num_m), 0.0); // calculate payoff for one call
