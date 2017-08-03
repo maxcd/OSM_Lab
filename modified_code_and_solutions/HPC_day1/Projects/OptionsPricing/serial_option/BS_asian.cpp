@@ -9,7 +9,7 @@
 #include <algorithm>    // Needed for the "max" function
 #include <cmath>
 #include <iostream>
-#include <omp.h>
+
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  A simple implementation of the Box-Muller algorithm, used to 
@@ -54,12 +54,7 @@ double monte_carlo_call_asia_price(const int& num_sims, const double& S, const d
     double S_path = 0.0;
    
     // loop over the number of evaluations/periods  per options
-#pragma omp parallel
-{
-    #pragma omp for\
-	firstprivat(S_path, S_prev)\
-	privat(S_cur, guass_bm)
-    
+   
     for (int m=0; m<num_m; ++m) {
         double gauss_bm = gaussian_box_muller();
         S_cur = S_prev * exp(t*(r-0.5*v*v) + v*sqrt(t)*gauss_bm);
@@ -67,10 +62,11 @@ double monte_carlo_call_asia_price(const int& num_sims, const double& S, const d
 	
 	S_prev = S_cur; // update S_prev   
         }
-   }
- }
+   
+ 
     payoff_sum += std::max((S_path / num_m) - K, 0.0); // calculate payoff for one call
-  return (payoff_sum / static_cast<double>(num_sims)) * exp(-r*T);
+	}
+ return (payoff_sum / static_cast<double>(num_sims)) * exp(-r*T);
 }
 
 

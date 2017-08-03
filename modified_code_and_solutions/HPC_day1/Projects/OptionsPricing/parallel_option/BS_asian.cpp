@@ -9,7 +9,7 @@
 #include <algorithm>    // Needed for the "max" function
 #include <cmath>
 #include <iostream>
-#include <omp.h>	// paralellism library;
+#include <omp.h>
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  A simple implementation of the Box-Muller algorithm, used to 
@@ -40,45 +40,41 @@ double monte_carlo_call_asia_price(const int& num_sims, const double& S, const d
   
   double payoff_sum = 0.0;
   double t = T / (num_m*1.0); 
+ 
+  double S_cur;
+  double S_prev;
+  double S_path;
+//  double gauss_bm;
   
-  double S_cur = 0.0;
-  double S_prev = S;
-  double S_path = 0.0;
-  double out = 0.0;
-
-//  #pragma omp parallel shared(num_sims, num_m)\
-	firstprivate(S_cur, S_prev, S_path)  
-//  { 
-
   // loop over the number of  iterations
-//  #pragma omp for\
-	reduction(+:payoff_sum)  
-   for (int i=0; i<num_sims; i++) {
-  	
-	double S_cur = 0.0;
-  	double S_prev = S;
-  	double S_path = 0.0;
-
-   // loop over the number of evaluations/periods  per options
-   #pragma omp parallel firstprivate(S_cur, S_prev)
-
-   #pragma omp for reduction(+:S_path)
+  #pragma omp parallel
+	{ 
+  #pragma omp for private(S_cur, S_path, S_prev)\
+	reduction(+:payoff_sum) 
+  for (int i=0; i<num_sims; i++) {
+   
+   S_cur = 0.0;
+   double S_prev = S;
+   S_path = 0.0;
+   
+    // loop over the number of evaluations/periods  per options
+   
     for (int m=0; m<num_m; ++m) {
         double gauss_bm = gaussian_box_muller();
         S_cur = S_prev * exp(t*(r-0.5*v*v) + v*sqrt(t)*gauss_bm);
-        S_path += S_cur;  // add current value S_cur to the path 	
+        S_path += S_cur;  // add current value S_cur to the path 
+	
 	S_prev = S_cur; // update S_prev   
-        
-  
-   payoff_sum += std::max((S_path / num_m) - K, 0.0); // calculate payoff for one call
-//  #pragma omp single
-  out = (payoff_sum / static_cast<double>(num_sims)) * exp(-r*T); 
-
-  } // close inner loop
- } // close outer loop
-//} // close parallel
- return out;
+        }
+   
+ 
+    payoff_sum += std::max((S_path / num_m) - K, 0.0); // calculate payoff for one call
+	}
+    } // close parallel section
+ return (payoff_sum / static_cast<double>(num_sims)) * exp(-r*T);
 }
+
+
 
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -91,9 +87,6 @@ double monte_carlo_put_asia_price(const int& num_sims, const double& S, const do
   double S_adjust = S * exp(t*(r-0.5*v*v)); 
  
   // loop over the number of  iterations
-  
- // #pragma omp parallel privat(S_cur, S_pre, gauss_bm ) {
-
   for (int i=0; i<num_sims; i++) {
    
     double S_cur = 0.0;
@@ -110,10 +103,27 @@ double monte_carlo_put_asia_price(const int& num_sims, const double& S, const do
         }
     payoff_sum += std::max(K -  (S_path / num_m), 0.0); // calculate payoff for one call
   }
-//  }
+
   return (payoff_sum / static_cast<double>(num_sims)) * exp(-r*T);
 }
 
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Pricing a European vanilla put option with a Monte Carlo method
+
+double monte_carlo_put_price(const int& num_sims, const double& S, const double& K, const double& r, const double& v, const double& T) {
+  double S_adjust = S * exp(T*(r-0.5*v*v));
+  double S_cur = 0.0;
+  double payoff_sum = 0.0;
+
+  for (int i=0; i<num_sims; i++) {
+    double gauss_bm = gaussian_box_muller();
+    S_cur = S_adjust * exp(sqrt(v*v*T)*gauss_bm);
+    payoff_sum += std::max(K - S_cur, 0.0);
+  }
+
+  return (payoff_sum / static_cast<double>(num_sims)) * exp(-r*T);
+}
 
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -129,12 +139,14 @@ int main(int argc, char **argv) {
   double v = 0.2;    // Volatility of the underlying (20%)                                                            
   double T = 1.0;    // One year until expiry                                                                         
 
-  // Then we calculate the call/put values via Monte Carlo
-//  double call_time = -omp_get_wtime();
+  // Then we calculate the call/put values via Monte Carlo                                                                          
+//  double call_time_parallel = -omp_get_wtime;
   double call_asia = monte_carlo_call_asia_price(num_sims, S, K, r, v, T, num_m);
-//  call_time += omp_get_wtime(); 
-  double put_asia = monte_carlo_put_asia_price(num_sims, S, K, r, v, T, num_m);
+//  call_time_parallel += omp_get_wtime;
 
+//  double put_time_serial = -omp_get_wtime();
+  double put_asia = monte_carlo_put_asia_price(num_sims, S, K, r, v, T, num_m);
+//  put_time_serial += omp_get_wtime();
   //double put = monte_carlo_put_price(num_sims, S, K, r, v, T);
 
   // Finally we output the parameters and prices                                                                  
@@ -148,7 +160,9 @@ int main(int argc, char **argv) {
   std::cout << "Maturity:          " << T << std::endl;
 
   std::cout << "Call Price:        " << call_asia << std::endl;
+//  str::cout << "Call time parallel:" << call_time_parallel << std::endl;
   std::cout << "Put Price:         " << put_asia << std::endl;
+//  std::cout << "Put time serial:   " << put_time_serial << std:endl;
 
   return 0;
 }
